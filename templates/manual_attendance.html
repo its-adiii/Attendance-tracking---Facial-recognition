@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Manual Attendance - Face Recognition Attendance System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card border-0">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-edit me-2"></i>Manual Override
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="roll_number" class="form-label">
+                                <i class="fas fa-id-card me-1"></i>Roll Number *
+                            </label>
+                            <input type="text" class="form-control" id="roll_number" name="roll_number" 
+                                   required placeholder="Enter student roll number">
+                            <div class="form-text">Enter exact roll number</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="status" class="form-label">
+                                <i class="fas fa-info-circle me-1"></i>Attendance Status *
+                            </label>
+                            <select class="form-select" id="status" name="status" required>
+                                <option value="present">Present</option>
+                                <option value="late">Late</option>
+                                <option value="absent">Absent</option>
+                                <option value="excused">Excused</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-warning mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Use manual entry only for exceptions. Standard flow should be camera-based attendance.
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('attendance') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-camera me-1"></i>Use Face Recognition
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Mark Attendance
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4 border-0">
+            <div class="card-body text-center py-4">
+                <svg width="86" height="86" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="18" y="18" width="84" height="84" rx="12" stroke="#8b949e" stroke-width="4"/>
+                    <path d="M35 45H85M35 60H85M35 75H68" stroke="#8b949e" stroke-width="4" stroke-linecap="round"/>
+                </svg>
+                <p class="text-muted mt-3 mb-0">Manual entries are recorded immediately after submit.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#roll_number').on('input', function() {
+        this.value = this.value.toUpperCase();
+    });
+    
+    // Form validation
+    $('form').on('submit', function(e) {
+        const rollNumber = $('#roll_number').val().trim();
+        
+        if (!rollNumber) {
+            e.preventDefault();
+            showToast('Please enter a roll number.', 'warning');
+            return false;
+        }
+        
+        // Show loading state
+        $('button[type="submit"]').html('<i class="fas fa-spinner fa-spin me-1"></i>Processing...')
+                           .prop('disabled', true);
+    });
+});
+</script>
+{% endblock %}

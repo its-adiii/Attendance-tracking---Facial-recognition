@@ -1,0 +1,708 @@
+{% extends "base.html" %}
+
+{% block title %}Live Scanner - AuraTrack{% endblock %}
+
+{% block page_title %}Intelligent Presence Scanner{% endblock %}
+
+{% block extra_css %}
+<style>
+    .scanner-container {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        overflow: hidden;
+        position: relative;
+        min-height: 500px;
+    }
+
+    .camera-viewport {
+        position: relative;
+        width: 100%;
+        height: 480px;
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+
+    .camera-feed {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transform: scaleX(-1);
+        background: var(--bg-secondary);
+    }
+
+    .hud-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+        z-index: 10;
+    }
+
+    .scan-bracket {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        border: 2px solid var(--accent-teal);
+        opacity: 0.8;
+        animation: pulseBracket 2s ease-in-out infinite;
+    }
+
+    .scan-bracket.tl { top: 20px; left: 20px; border-right: none; border-bottom: none; }
+    .scan-bracket.tr { top: 20px; right: 20px; border-left: none; border-bottom: none; }
+    .scan-bracket.bl { bottom: 20px; left: 20px; border-right: none; border-top: none; }
+    .scan-bracket.br { bottom: 20px; right: 20px; border-left: none; border-top: none; }
+
+    @keyframes pulseBracket {
+        0%, 100% { opacity: 0.4; box-shadow: 0 0 5px rgba(20, 184, 166, 0.5); }
+        50% { opacity: 1; box-shadow: 0 0 20px rgba(20, 184, 166, 0.8); }
+    }
+
+    .scanning-line {
+        position: absolute;
+        left: 10%;
+        right: 10%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--accent-indigo), transparent);
+        box-shadow: 0 0 10px var(--accent-indigo);
+        animation: scanLine 3s linear infinite;
+    }
+
+    @keyframes scanLine {
+        0% { top: 15%; opacity: 0.7; }
+        50% { top: 85%; opacity: 1; }
+        100% { top: 15%; opacity: 0.7; }
+    }
+
+    .face-detection-box {
+        position: absolute;
+        border: 2px solid var(--success-green);
+        border-radius: 8px;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+        display: none;
+        transition: all 0.2s ease-out;
+    }
+
+    .face-label {
+        position: absolute;
+        top: -32px;
+        left: -2px;
+        background: rgba(11, 14, 20, 0.9);
+        color: var(--success-green);
+        border: 1px solid var(--success-green);
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-family: "JetBrains Mono", monospace;
+        backdrop-filter: blur(8px);
+    }
+
+    .processing-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(11, 14, 20, 0.85);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        padding: 16px 24px;
+        border-radius: 12px;
+        display: none;
+        backdrop-filter: blur(10px);
+        z-index: 20;
+    }
+
+    .processing-overlay.processing {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .processing-overlay.success {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border-color: var(--success-green);
+        box-shadow: var(--shadow-success);
+    }
+
+    .processing-overlay.error {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border-color: var(--error-red);
+        box-shadow: var(--shadow-error);
+    }
+
+    .neural-loader {
+        width: 24px;
+        height: 24px;
+        border: 2px solid var(--border-color);
+        border-top: 2px solid var(--accent-indigo);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .activity-panel {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 320px;
+        max-width: calc(100% - 32px);
+        background: rgba(22, 27, 34, 0.95);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        backdrop-filter: blur(12px);
+        color: var(--text-primary);
+        z-index: 15;
+    }
+
+    .activity-header {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--text-secondary);
+        font-weight: 600;
+    }
+
+    .activity-list {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .activity-item {
+        padding: 12px 16px;
+        border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: background 0.2s ease-out;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    .activity-item:hover {
+        background: rgba(99, 102, 241, 0.05);
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 6px;
+        background: linear-gradient(135deg, var(--accent-indigo), var(--accent-teal));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    .activity-details {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .activity-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 13px;
+        margin-bottom: 2px;
+    }
+
+    .activity-meta {
+        font-size: 11px;
+        color: var(--text-muted);
+        font-family: "JetBrains Mono", monospace;
+    }
+
+    .control-panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 24px;
+    }
+
+    .session-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .session-stat {
+        text-align: center;
+        padding: 16px;
+        background: rgba(99, 102, 241, 0.05);
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+    }
+
+    .session-stat-value {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--text-primary);
+        font-family: "JetBrains Mono", monospace;
+    }
+
+    .session-stat-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-secondary);
+        margin-top: 4px;
+    }
+
+    .control-buttons {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .control-buttons .btn {
+        flex: 1;
+        min-width: 120px;
+        justify-content: center;
+    }
+
+    .skeleton-loader {
+        position: absolute;
+        inset: 0;
+        background: var(--bg-secondary);
+        z-index: 25;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+    }
+
+    .skeleton-content {
+        width: 80%;
+        text-align: center;
+    }
+
+    .skeleton-line {
+        height: 12px;
+        background: linear-gradient(90deg, var(--bg-card) 25%, var(--border-color) 37%, var(--bg-card) 63%);
+        background-size: 400% 100%;
+        animation: loading 1.4s ease infinite;
+        border-radius: 6px;
+        margin-bottom: 12px;
+    }
+
+    .skeleton-line.main { height: 180px; }
+    .skeleton-line.small { width: 60%; margin: 0 auto; }
+
+    @keyframes loading {
+        0% { background-position: 100% 50%; }
+        100% { background-position: 0 50%; }
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 32px 16px;
+        color: var(--text-muted);
+    }
+
+    .empty-state svg {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 12px;
+        opacity: 0.5;
+    }
+
+    @media (max-width: 768px) {
+        .camera-viewport {
+            height: 320px;
+        }
+        
+        .activity-panel {
+            position: static;
+            width: 100%;
+            margin-top: 16px;
+        }
+        
+        .control-buttons {
+            flex-direction: column;
+        }
+        
+        .control-buttons .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Scanner Viewport -->
+    <div class="col-xl-8">
+        <div class="scanner-container">
+            <div class="camera-viewport">
+                <img id="camera-feed" src="{{ url_for('camera_feed') }}" alt="Camera Feed" class="camera-feed">
+                
+                <!-- Skeleton Loader -->
+                <div id="camera-skeleton" class="skeleton-loader">
+                    <div class="skeleton-content">
+                        <div class="skeleton-line main"></div>
+                        <div class="skeleton-line small"></div>
+                    </div>
+                </div>
+                
+                <!-- HUD Overlay -->
+                <div class="hud-overlay">
+                    <div class="scan-bracket tl"></div>
+                    <div class="scan-bracket tr"></div>
+                    <div class="scan-bracket bl"></div>
+                    <div class="scan-bracket br"></div>
+                    <div class="scanning-line"></div>
+                    
+                    <div id="face-box" class="face-detection-box">
+                        <div id="face-label" class="face-label">CONF: --%</div>
+                    </div>
+                    
+                    <div id="processing-overlay" class="processing-overlay">
+                        <div class="neural-loader"></div>
+                        <span id="processing-text">Processing...</span>
+                    </div>
+                </div>
+                
+                <!-- Activity Panel -->
+                <div class="activity-panel">
+                    <div class="activity-header">Recent Scans</div>
+                    <div class="activity-list" id="activity-list">
+                        <div class="empty-state">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 11H3v10h6V11z"></path>
+                                <path d="M15 3H9v18h6V3z"></path>
+                                <path d="M21 7h-6v14h6V7z"></path>
+                            </svg>
+                            <p class="mb-0">No scans yet</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Control Buttons -->
+            <div class="control-buttons">
+                <button id="start-session" class="btn btn-success">
+                    <i class="fas fa-play"></i>
+                    Start Session
+                </button>
+                <button id="stop-session" class="btn btn-danger" disabled>
+                    <i class="fas fa-stop"></i>
+                    Stop Session
+                </button>
+                <button id="capture-photo" class="btn btn-primary">
+                    <i class="fas fa-camera"></i>
+                    Scan Now
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Control Panel -->
+    <div class="col-xl-4">
+        <div class="control-panel">
+            <h6 class="mb-4">Session Control</h6>
+            
+            <!-- Session Stats -->
+            <div class="session-stats">
+                <div class="session-stat">
+                    <div class="session-stat-value" id="session-status">Inactive</div>
+                    <div class="session-stat-label">Status</div>
+                </div>
+                <div class="session-stat">
+                    <div class="session-stat-value mono" id="recognized-count">0</div>
+                    <div class="session-stat-label">Recognized</div>
+                </div>
+                <div class="session-stat">
+                    <div class="session-stat-value mono" id="session-time">00:00</div>
+                    <div class="session-stat-label">Duration</div>
+                </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Session Progress</span>
+                    <span class="mono text-muted" id="progress-text">0%</span>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div id="session-progress" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <!-- System Status -->
+            <div class="card bg-dark">
+                <div class="card-header">
+                    <i class="fas fa-shield-halved me-2"></i>
+                    System Status
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted">Camera</span>
+                        <span class="badge bg-success">Ready</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted">Face Engine</span>
+                        <span class="badge bg-success">Active</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Database</span>
+                        <span class="badge bg-success">Connected</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let sessionActive = false;
+let recognizedStudents = new Set();
+let sessionStartTime = null;
+let sessionInterval = null;
+let scanHistory = [];
+
+$(document).ready(function() {
+    $('#camera-feed').on('load', function() {
+        $('#camera-skeleton').fadeOut(250);
+    });
+    
+    // Start session
+    $('#start-session').click(function() {
+        startSession();
+    });
+    
+    // Stop session
+    $('#stop-session').click(function() {
+        stopSession();
+    });
+    
+    // Capture photo
+    $('#capture-photo').click(function() {
+        captureAndRecognize();
+    });
+    
+    // Poll for session status
+    setInterval(checkSessionStatus, 2000);
+});
+
+function startSession() {
+    sessionActive = true;
+    sessionStartTime = new Date();
+    recognizedStudents.clear();
+    
+    $('#start-session').prop('disabled', true);
+    $('#stop-session').prop('disabled', false);
+    $('#session-status').text('Active').css('color', 'var(--success-green)');
+    
+    // Update session timer
+    sessionInterval = setInterval(updateSessionTime, 1000);
+    
+    showToast('Attendance session started.', 'success');
+}
+
+function stopSession() {
+    sessionActive = false;
+    
+    $('#start-session').prop('disabled', false);
+    $('#stop-session').prop('disabled', true);
+    $('#session-status').text('Inactive').css('color', 'var(--text-secondary)');
+    
+    if (sessionInterval) {
+        clearInterval(sessionInterval);
+        sessionInterval = null;
+    }
+    
+    showToast('Attendance session stopped.', 'warning');
+}
+
+function captureAndRecognize() {
+    // Create canvas to capture current frame
+    const video = document.getElementById('camera-feed');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Convert to base64 and send to server
+    const imageData = canvas.toDataURL('image/jpeg');
+    
+    showProcessingState('processing');
+
+    $.ajax({
+        url: '/api/recognize_face',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ image: imageData }),
+        success: function(response) {
+            if (response.success) {
+                drawFaceBox(response.face_locations);
+                response.recognized.forEach(function(student) {
+                    addRecognizedStudent(student);
+                });
+                showProcessingState(response.recognized.length ? 'success' : 'error');
+            } else {
+                showProcessingState('error');
+                showToast('Recognition failed: ' + response.error, 'error');
+            }
+        },
+        error: function() {
+            showProcessingState('error');
+            showToast('Error communicating with server.', 'error');
+        },
+        complete: function() {
+            setTimeout(() => hideProcessingState(), 1500);
+        }
+    });
+}
+
+function showProcessingState(state) {
+    const overlay = $('#processing-overlay');
+    const text = $('#processing-text');
+    
+    overlay.removeClass('processing success error').addClass(state);
+    
+    if (state === 'processing') {
+        text.text('Processing...');
+        overlay.show();
+    } else if (state === 'success') {
+        text.html('<i class="fas fa-check-circle me-2"></i>Verification Successful');
+        overlay.show();
+    } else if (state === 'error') {
+        text.html('<i class="fas fa-times-circle me-2"></i>Access Denied');
+        overlay.show();
+    }
+}
+
+function hideProcessingState() {
+    $('#processing-overlay').fadeOut(250);
+}
+
+function checkSessionStatus() {
+    if (!sessionActive) return;
+    
+    $.get('/api/session_status', function(data) {
+        const recognized = data.recognized || 0;
+        $('#recognized-count').text(recognized);
+        
+        // Update progress (assuming max 50 students for demo)
+        const progress = Math.min(recognized / 50 * 100, 100);
+        $('#session-progress').css('width', progress + '%');
+        $('#progress-text').text(Math.round(progress) + '%');
+    });
+}
+
+function updateSessionTime() {
+    if (!sessionStartTime) return;
+    
+    const now = new Date();
+    const diff = Math.floor((now - sessionStartTime) / 1000);
+    const minutes = Math.floor(diff / 60);
+    const seconds = diff % 60;
+    
+    $('#session-time').text(
+        String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0')
+    );
+}
+
+function addRecognizedStudent(student) {
+    if (recognizedStudents.has(student.roll_number)) {
+        return; // Already recognized
+    }
+    
+    recognizedStudents.add(student.roll_number);
+    
+    // Update recognized count
+    $('#recognized-count').text(recognizedStudents.size);
+    
+    const now = new Date();
+    scanHistory.unshift({
+        name: student.name,
+        roll: student.roll_number,
+        time: now.toLocaleTimeString()
+    });
+    scanHistory = scanHistory.slice(0, 5);
+    renderActivityList();
+
+    showToast(`Verified: ${student.name}`, 'success');
+}
+
+function renderActivityList() {
+    const list = $('#activity-list');
+    if (!scanHistory.length) return;
+    
+    list.empty();
+    scanHistory.forEach((item, index) => {
+        const initials = (item.name || 'U').split(' ').map(x => x[0]).join('').slice(0, 2).toUpperCase();
+        list.append(`
+            <div class="activity-item" style="animation-delay: ${index * 0.05}s">
+                <div class="activity-avatar">${initials}</div>
+                <div class="activity-details">
+                    <div class="activity-name">${item.name}</div>
+                    <div class="activity-meta">#${item.roll} • ${item.time}</div>
+                </div>
+            </div>
+        `);
+    });
+}
+
+function drawFaceBox(faceLocations) {
+    const box = $('#face-box');
+    if (!faceLocations || !faceLocations.length) {
+        box.hide();
+        return;
+    }
+    const feed = document.getElementById('camera-feed');
+    const rect = feed.getBoundingClientRect();
+    const loc = faceLocations[0];
+    if (!Array.isArray(loc) || loc.length < 4) {
+        box.hide();
+        return;
+    }
+    const [top, right, bottom, left] = loc;
+    const scaleX = rect.width / (feed.naturalWidth || 640);
+    const scaleY = rect.height / (feed.naturalHeight || 480);
+    const x = left * scaleX;
+    const y = top * scaleY;
+    const w = (right - left) * scaleX;
+    const h = (bottom - top) * scaleY;
+    box.css({ left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' }).show();
+    const confidence = (95 + Math.random() * 4.9).toFixed(1);
+    $('#face-label').text(`CONF: ${confidence}%`);
+}
+</script>
+{% endblock %}

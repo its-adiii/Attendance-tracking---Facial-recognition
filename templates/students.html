@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+
+{% block title %}Employees - AuraTrack{% endblock %}
+
+{% block page_title %}Employee Directory{% endblock %}
+
+{% block content %}
+<div class="card border-0">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0"><i class="fas fa-users me-2"></i>Employee Directory</h4>
+                <a href="{{ url_for('register') }}" class="btn btn-primary">
+                    <i class="fas fa-user-plus me-1"></i>Add New Employee
+                </a>
+            </div>
+            <div class="card-body">
+                {% if students %}
+                    <!-- Search and Filter -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <input type="text" id="search-input" class="form-control" 
+                                   placeholder="Search employees by name or ID...">
+                        </div>
+                        <div class="col-md-3">
+                            <select id="status-filter" class="form-select">
+                                <option value="">All Employees</option>
+                                <option value="with-face">With Face Data</option>
+                                <option value="without-face">Without Face Data</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="btn-group w-100" role="group">
+                                <button type="button" class="btn btn-outline-secondary" onclick="exportStudents()">
+                                    <i class="fas fa-download me-1"></i>Export
+                                </button>
+                                <button type="button" class="btn btn-outline-info" onclick="printStudents()">
+                                    <i class="fas fa-print me-1"></i>Print
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Students Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" id="students-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Roll Number</th>
+                                    <th>Email</th>
+                                    <th>Face Status</th>
+                                    <th>Registration Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for student in students %}
+                                <tr data-name="{{ student[1]|lower }}" 
+                                    data-roll="{{ student[2]|lower }}" 
+                                    data-face="{{ 'yes' if student[4] else 'no' }}">
+                                    <td>{{ student[0] }}</td>
+                                    <td><strong>{{ student[1] }}</strong></td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ student[2] }}</span>
+                                    </td>
+                                    <td>
+                                        {% if student[3] %}
+                                            <a href="mailto:{{ student[3] }}" class="text-decoration-none">
+                                                <i class="fas fa-envelope me-1"></i>{{ student[3] }}
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">No email</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if student[4] %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check-circle me-1"></i>Registered
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>No Face Data
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="mono">{{ student[5] }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{{ url_for('edit_student', roll_number=student[2]) }}" 
+                                               class="btn btn-outline-primary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% if not student[4] %}
+                                            <button type="button" class="btn btn-outline-success" 
+                                                    onclick="captureFace('{{ student[2] }}', '{{ student[1] }}')" 
+                                                    title="Capture Face">
+                                                <i class="fas fa-camera"></i>
+                                            </button>
+                                            {% endif %}
+                                            <button type="button" class="btn btn-outline-info" 
+                                                    onclick="viewStudentDetails('{{ student[0] }}')" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <form method="POST" 
+                                                  action="{{ url_for('delete_student', roll_number=student[2]) }}" 
+                                                  class="d-inline" onsubmit="return confirmDelete('{{ student[1] }}')">
+                                                <button type="submit" class="btn btn-outline-danger" title="Delete">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="row g-2 mt-2">
+                        <div class="col-md-3">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body text-center py-3">
+                                    <h6 class="card-title text-muted">Total</h6>
+                                    <h3>{{ students | length }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body text-center py-3">
+                                    <h6 class="card-title text-muted">With Face Data</h6>
+                                    <h3>{{ students | selectattr('4') | list | length }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body text-center py-3">
+                                    <h6 class="card-title text-muted">Missing Face Data</h6>
+                                    <h3>{{ students | rejectattr('4') | list | length }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body text-center py-3">
+                                    <h6 class="card-title text-muted">Completion Rate</h6>
+                                    <h3>{{ "%.1f"|format((students | selectattr('4') | list | length / students | length * 100) if students else 0) }}%</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-users fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted">No Students Registered</h4>
+                        <p class="text-muted">Start by adding your first student to the system</p>
+                        <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-user-plus me-2"></i>Register First Student
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+</div>
+
+<!-- Student Details Modal -->
+<div class="modal fade" id="studentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Student Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="student-details">
+                <!-- Details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Search functionality
+    $('#search-input').on('input', function() {
+        const searchTerm = $(this).val().toLowerCase();
+        filterStudents();
+    });
+    
+    // Status filter
+    $('#status-filter').on('change', function() {
+        filterStudents();
+    });
+});
+
+function filterStudents() {
+    const searchTerm = $('#search-input').val().toLowerCase();
+    const statusFilter = $('#status-filter').val();
+    
+    $('#students-table tbody tr').each(function() {
+        const name = $(this).data('name');
+        const roll = $(this).data('roll');
+        const hasFace = $(this).data('face');
+        
+        const matchesSearch = name.includes(searchTerm) || roll.includes(searchTerm);
+        const matchesStatus = !statusFilter || 
+                             (statusFilter === 'with-face' && hasFace === 'yes') ||
+                             (statusFilter === 'without-face' && hasFace === 'no');
+        
+        $(this).toggle(matchesSearch && matchesStatus);
+    });
+}
+
+function confirmDelete(studentName) {
+    return confirm(`Are you sure you want to delete ${studentName}? This action cannot be undone.`);
+}
+
+function viewStudentDetails(studentId) {
+    const modal = new bootstrap.Modal(document.getElementById('studentModal'));
+    document.getElementById('student-details').innerHTML = `
+        <div class="text-center">
+            <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+            <p class="mt-2">Loading student details...</p>
+        </div>
+    `;
+    modal.show();
+    
+    // Simulate loading delay
+    setTimeout(function() {
+        document.getElementById('student-details').innerHTML = `
+            <p><strong>Student ID:</strong> ${studentId}</p>
+            <p><strong>Information:</strong> Detailed student information would be loaded here.</p>
+            <p><strong>Attendance History:</strong> Attendance records would be displayed here.</p>
+        `;
+    }, 500);
+}
+
+function captureFace(rollNumber, studentName) {
+    if (confirm(`Ready to capture face for ${studentName} (${rollNumber})?`)) {
+        window.location.href = `{{ url_for('register') }}?capture_face=true&roll_number=${rollNumber}&name=${encodeURIComponent(studentName)}`;
+    }
+}
+
+function exportStudents() {
+    // Create CSV content
+    let csvContent = "ID,Name,Roll Number,Email,Face Status,Registration Date\n";
+    
+    $('#students-table tbody tr:visible').each(function() {
+        const cells = $(this).find('td');
+        const row = [
+            cells.eq(0).text().trim(),
+            cells.eq(1).text().trim(),
+            cells.eq(2).text().trim(),
+            cells.eq(3).text().trim(),
+            cells.eq(4).text().trim(),
+            cells.eq(5).text().trim()
+        ].join(',');
+        csvContent += row + '\n';
+    });
+    
+    // Download CSV
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'students_list.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+function printStudents() {
+    window.print();
+}
+</script>
+
+<style>
+@media print {
+    .btn, .btn-group, .modal, nav, footer {
+        display: none !important;
+    }
+    
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .table {
+        font-size: 12px;
+    }
+}
+</style>
+{% endblock %}

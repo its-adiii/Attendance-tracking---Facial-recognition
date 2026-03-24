@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - AuraTrack{% endblock %}
+
+{% block page_title %}Analytics & Reports{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card border-0">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Analytics Dashboard
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('generate_report') }}">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="start_date" class="form-label">
+                                <i class="fas fa-calendar-alt me-1"></i>Start Date *
+                            </label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="end_date" class="form-label">
+                                <i class="fas fa-calendar-alt me-1"></i>End Date *
+                            </label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" required>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" class="btn btn-secondary me-md-2" onclick="resetForm()">
+                            <i class="fas fa-times me-1"></i>Reset
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-chart-line me-1"></i>Generate Report
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-3 border-0">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>Quick Presets
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">Today's Report</h6>
+                                <p class="card-text small">Single-day attendance output</p>
+                                <button class="btn btn-sm btn-outline-primary" onclick="generateQuickReport('today')">
+                                    <i class="fas fa-calendar-day me-1"></i>Generate
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">This Week</h6>
+                                <p class="card-text small">Last 7 days attendance output</p>
+                                <button class="btn btn-sm btn-outline-primary" onclick="generateQuickReport('week')">
+                                    <i class="fas fa-calendar-week me-1"></i>Generate
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">This Month</h6>
+                                <p class="card-text small">Current month attendance output</p>
+                                <button class="btn btn-sm btn-outline-primary" onclick="generateQuickReport('month')">
+                                    <i class="fas fa-calendar me-1"></i>Generate
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">Custom Range</h6>
+                                <p class="card-text small">Use date selectors for custom window</p>
+                                <button class="btn btn-sm btn-outline-secondary" disabled>
+                                    <i class="fas fa-calendar-alt me-1"></i>Custom
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-4 border-0">
+            <div class="card-body text-center py-4">
+                <svg width="86" height="86" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="18" y="18" width="84" height="84" rx="12" stroke="#8b949e" stroke-width="4"/>
+                    <path d="M40 46H80M40 60H80M40 74H70" stroke="#8b949e" stroke-width="4" stroke-linecap="round"/>
+                </svg>
+                <p class="text-muted mt-3 mb-0">Generate a report to view export and history actions.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Set default date range (last 7 days)
+    const today = new Date();
+    const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
+    $('#end_date').val(today.toISOString().split('T')[0]);
+    $('#start_date').val(lastWeek.toISOString().split('T')[0]);
+    
+    $('#start_date, #end_date').on('change', function() {
+        validateDateRange();
+    });
+});
+
+function validateDateRange() {
+    const startDate = new Date($('#start_date').val());
+    const endDate = new Date($('#end_date').val());
+    
+    if (startDate > endDate) {
+        showToast('Start date cannot be after end date.', 'warning');
+        $('#end_date').val($('#start_date').val());
+    }
+    
+    // Limit date range to 90 days
+    const maxDate = new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1000);
+    if (endDate > maxDate) {
+        showToast('Date range cannot exceed 90 days.', 'warning');
+        $('#end_date').val(maxDate.toISOString().split('T')[0]);
+    }
+}
+
+function generateQuickReport(type) {
+    const today = new Date();
+    let startDate, endDate;
+    
+    switch(type) {
+        case 'today':
+            startDate = endDate = today;
+            break;
+        case 'week':
+            startDate = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+            endDate = today;
+            break;
+        case 'month':
+            startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            endDate = today;
+            break;
+    }
+    
+    $('#start_date').val(startDate.toISOString().split('T')[0]);
+    $('#end_date').val(endDate.toISOString().split('T')[0]);
+    
+    // Submit form
+    $('form').submit();
+}
+
+function resetForm() {
+    $('form')[0].reset();
+    
+    // Reset to default values
+    const today = new Date();
+    const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
+    $('#end_date').val(today.toISOString().split('T')[0]);
+    $('#start_date').val(lastWeek.toISOString().split('T')[0]);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Student - Face Recognition Attendance System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card border-0">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-edit me-2"></i>Edit Student Profile
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="roll_number" class="form-label">
+                                <i class="fas fa-id-card me-1"></i>Roll Number
+                            </label>
+                            <input type="text" class="form-control" id="roll_number" 
+                                   value="{{ student[2] }}" readonly>
+                            <div class="form-text">Roll number cannot be changed</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">
+                                <i class="fas fa-user me-1"></i>Full Name *
+                            </label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   value="{{ student[1] }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="email" class="form-label">
+                            <i class="fas fa-envelope me-1"></i>Email Address
+                        </label>
+                        <input type="email" class="form-control" id="email" name="email" 
+                               value="{{ student[3] or '' }}" placeholder="Enter email address">
+                    </div>
+                    
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="fas fa-camera me-2"></i>Face Recognition Status
+                            </h6>
+                            {% if student[4] %}
+                                <div class="alert alert-success">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    Face data is registered and active
+                                </div>
+                                <button type="button" class="btn btn-warning" onclick="recaptureFace()">
+                                    <i class="fas fa-camera me-1"></i>Recapture Face
+                                </button>
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    No face data registered. Student cannot use face recognition attendance.
+                                </div>
+                                <button type="button" class="btn btn-success" onclick="captureFace()">
+                                    <i class="fas fa-camera me-1"></i>Capture Face Now
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="fas fa-info-circle me-2"></i>Registration Information
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Student ID:</strong> {{ student[0] }}</p>
+                                    <p class="mb-1"><strong>Roll Number:</strong> {{ student[2] }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Registered:</strong> {{ student[5] }}</p>
+                                    <p class="mb-1"><strong>Status:</strong> 
+                                        <span class="badge bg-success">Active</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('students') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times me-1"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4 border-0">
+            <div class="card-header bg-light text-danger">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Danger Zone
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> The following actions are irreversible and will 
+                    permanently delete student data and attendance records.
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <button type="button" class="btn btn-outline-warning w-100" onclick="resetFaceData()">
+                            <i class="fas fa-camera-slash me-1"></i>Reset Face Data
+                        </button>
+                        <small class="form-text">Remove face recognition data only</small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <form method="POST" 
+                              action="{{ url_for('delete_student', roll_number=student[2]) }}" 
+                              class="d-inline" onsubmit="return confirmDeleteStudent()">
+                            <button type="submit" class="btn btn-outline-danger w-100">
+                                <i class="fas fa-trash me-1"></i>Delete Student
+                            </button>
+                            <small class="form-text">Remove student and all attendance records</small>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Form validation
+    $('form').on('submit', function(e) {
+        const name = $('#name').val().trim();
+        
+        if (!name) {
+            e.preventDefault();
+            showToast('Student name is required.', 'warning');
+            return false;
+        }
+        
+        // Show loading state
+        $('button[type="submit"]').html('<i class="fas fa-spinner fa-spin me-1"></i>Saving...')
+                           .prop('disabled', true);
+    });
+});
+
+function confirmDeleteStudent() {
+    const studentName = '{{ student[1] }}';
+    const rollNumber = '{{ student[2] }}';
+    
+    return confirm(`Are you absolutely sure you want to delete ${studentName} (${rollNumber})?\n\n` +
+                   `This will permanently remove:\n` +
+                   `• Student information\n` +
+                   `• Face recognition data\n` +
+                   `• All attendance records\n\n` +
+                   `This action cannot be undone.`);
+}
+
+function captureFace() {
+    const rollNumber = '{{ student[2] }}';
+    const studentName = '{{ student[1] }}';
+    
+    if (confirm(`Ready to capture face for ${studentName} (${rollNumber})?`)) {
+        // Redirect to registration page with pre-filled data
+        window.location.href = `{{ url_for('register') }}?capture_face=true&roll_number=${rollNumber}&name=${encodeURIComponent(studentName)}`;
+    }
+}
+
+function recaptureFace() {
+    const rollNumber = '{{ student[2] }}';
+    const studentName = '{{ student[1] }}';
+    
+    if (confirm(`This will replace the existing face data for ${studentName} (${rollNumber}). Continue?`)) {
+        // Redirect to registration page for recapture
+        window.location.href = `{{ url_for('register') }}?recapture=true&roll_number=${rollNumber}&name=${encodeURIComponent(studentName)}`;
+    }
+}
+
+function resetFaceData() {
+    const rollNumber = '{{ student[2] }}';
+    const studentName = '{{ student[1] }}';
+    
+    if (confirm(`Are you sure you want to remove face recognition data for ${studentName} (${rollNumber})?\n\n` +
+                   `The student will need to re-register their face to use face recognition attendance.`)) {
+        
+        // Make AJAX call to reset face data
+        $.ajax({
+            url: '/api/reset_face_data',
+            method: 'POST',
+            data: { roll_number: rollNumber },
+            success: function(response) {
+                if (response.success) {
+                    showToast('Face data reset successfully.', 'success');
+                    setTimeout(function() {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    showToast('Error resetting face data: ' + response.error, 'error');
+                }
+            },
+            error: function() {
+                showToast('Error communicating with server.', 'error');
+            }
+        });
+    }
+}
+</script>
+{% endblock %}
