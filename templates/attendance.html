@@ -12,126 +12,158 @@
         border-radius: 16px;
         overflow: hidden;
         position: relative;
+        overflow: hidden;
         min-height: 500px;
     }
 
-    .camera-viewport {
-        position: relative;
-        width: 100%;
-        height: 480px;
-        background: var(--bg-secondary);
-        border-radius: 12px;
-        overflow: hidden;
-        margin-bottom: 20px;
-    }
-
-    .camera-feed {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-        transform: scaleX(-1);
-        background: var(--bg-secondary);
-    }
-
-    .hud-overlay {
+    .scanner-container::before {
+        content: '';
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        pointer-events: none;
-        z-index: 10;
+        top: -100px;
+        right: -100px;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(20, 184, 166, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+        animation: float 8s ease-in-out infinite;
+    }
+
+    .camera-viewport {
+        background: #000;
+        border-radius: 16px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        border: 1px solid var(--border-color);
+    }
+
+    .camera-placeholder {
+        width: 100%;
+        height: 400px;
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .camera-placeholder::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 200px;
+        height: 200px;
+        transform: translate(-50%, -50%);
+        background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
+        border-radius: 50%;
+        animation: pulse 3s ease-in-out infinite;
+    }
+
+    .camera-icon {
+        font-size: 64px;
+        color: var(--accent-indigo);
+        opacity: 0.8;
+        z-index: 2;
+        position: relative;
     }
 
     .scan-bracket {
         position: absolute;
         width: 60px;
         height: 60px;
-        border: 2px solid var(--accent-teal);
+        border: 3px solid var(--accent-teal);
         opacity: 0.8;
-        animation: pulseBracket 2s ease-in-out infinite;
     }
 
-    .scan-bracket.tl { top: 20px; left: 20px; border-right: none; border-bottom: none; }
-    .scan-bracket.tr { top: 20px; right: 20px; border-left: none; border-bottom: none; }
-    .scan-bracket.bl { bottom: 20px; left: 20px; border-right: none; border-top: none; }
-    .scan-bracket.br { bottom: 20px; right: 20px; border-left: none; border-top: none; }
+    .scan-bracket.tl {
+        top: 20px;
+        left: 20px;
+        border-right: none;
+        border-bottom: none;
+    }
 
-    @keyframes pulseBracket {
-        0%, 100% { opacity: 0.4; box-shadow: 0 0 5px rgba(20, 184, 166, 0.5); }
-        50% { opacity: 1; box-shadow: 0 0 20px rgba(20, 184, 166, 0.8); }
+    .scan-bracket.tr {
+        top: 20px;
+        right: 20px;
+        border-left: none;
+        border-bottom: none;
+    }
+
+    .scan-bracket.bl {
+        bottom: 20px;
+        left: 20px;
+        border-right: none;
+        border-top: none;
+    }
+
+    .scan-bracket.br {
+        bottom: 20px;
+        right: 20px;
+        border-left: none;
+        border-top: none;
     }
 
     .scanning-line {
         position: absolute;
-        left: 10%;
-        right: 10%;
+        top: 0;
+        left: 0;
+        right: 0;
         height: 2px;
-        background: linear-gradient(90deg, transparent, var(--accent-indigo), transparent);
-        box-shadow: 0 0 10px var(--accent-indigo);
-        animation: scanLine 3s linear infinite;
+        background: linear-gradient(90deg, transparent, var(--accent-teal), transparent);
+        animation: scan 2s linear infinite;
+        box-shadow: 0 0 10px var(--accent-teal);
     }
 
-    @keyframes scanLine {
-        0% { top: 15%; opacity: 0.7; }
-        50% { top: 85%; opacity: 1; }
-        100% { top: 15%; opacity: 0.7; }
+    @keyframes scan {
+        0% { top: 0; }
+        100% { top: 100%; }
     }
 
     .face-detection-box {
         position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 150px;
+        height: 150px;
         border: 2px solid var(--success-green);
         border-radius: 8px;
-        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
         display: none;
-        transition: all 0.2s ease-out;
+        background: rgba(16, 185, 129, 0.1);
     }
 
-    .face-label {
+    .confidence-badge {
         position: absolute;
-        top: -32px;
-        left: -2px;
-        background: rgba(11, 14, 20, 0.9);
-        color: var(--success-green);
-        border: 1px solid var(--success-green);
+        top: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--success-green);
+        color: white;
         padding: 4px 8px;
-        border-radius: 6px;
-        font-size: 11px;
-        font-family: "JetBrains Mono", monospace;
-        backdrop-filter: blur(8px);
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
     }
 
     .processing-overlay {
         position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(11, 14, 20, 0.85);
-        border: 1px solid var(--border-color);
-        color: var(--text-primary);
-        padding: 16px 24px;
-        border-radius: 12px;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
         display: none;
-        backdrop-filter: blur(10px);
-        z-index: 20;
-    }
-
-    .processing-overlay.processing {
-        display: flex;
         align-items: center;
-        gap: 12px;
+        justify-content: center;
+        border-radius: 16px;
+        backdrop-filter: blur(5px);
     }
 
-    .processing-overlay.success {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        border-color: var(--success-green);
-        box-shadow: var(--shadow-success);
-    }
-
-    .processing-overlay.error {
+    .processing-content {
+        text-align: center;
+        color: white;
         display: flex;
         align-items: center;
         gap: 12px;
