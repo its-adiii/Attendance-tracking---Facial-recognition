@@ -5,140 +5,67 @@
 {% block page_title %}Intelligent Presence Verification{% endblock %}
 
 {% block content %}
-<div class="hero-section">
-    <div class="row align-items-center">
-        <div class="col-lg-7">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
-                <div>
-                    <div class="text-muted small text-uppercase mb-2">Welcome to</div>
-                    <h2 class="mb-2">AuraTrack Operations</h2>
-                    <p class="text-muted mb-4">Enterprise-grade presence verification and attendance tracking powered by advanced face recognition technology.</p>
-                    <div class="d-flex gap-3 flex-wrap">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon me-2">
-                                <i class="fas fa-users"></i>
-                            </div>
-                            <div>
-                                <div class="fw-bold">500+</div>
-                                <div class="small text-muted">Employees</div>
-                            </div>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon me-2">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <div>
-                                <div class="fw-bold">24/7</div>
-                                <div class="small text-muted">Monitoring</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+<div class="card mb-3">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <div class="text-muted small text-uppercase mb-2">Control Center</div>
+                <h2 class="mb-2">AuraTrack Operations</h2>
+                <p class="text-muted mb-0">Enterprise-grade presence verification and attendance tracking.</p>
             </div>
-        </div>
-        <div class="col-lg-5">
-            <div class="illustration">
-                <div class="text-center">
-                    <i class="fas fa-fingerprint" style="font-size: 64px; opacity: 0.6; color: var(--accent-indigo);"></i>
-                </div>
-            </div>
+            <div class="mono small text-muted">system: online</div>
         </div>
     </div>
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <a href="{{ url_for('register') }}" class="btn btn-primary w-100 py-3">
-            <i class="fas fa-user-plus me-2"></i>Register Employee
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a href="{{ url_for('attendance') }}" class="btn btn-success w-100 py-3">
-            <i class="fas fa-camera me-2"></i>Start Scanner
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary w-100 py-3">
-            <i class="fas fa-chart-bar me-2"></i>View Dashboard
-        </a>
-    </div>
+<div class="row g-3 mb-3">
+    <div class="col-md-4"><a href="{{ url_for('register') }}" class="btn btn-primary w-100 py-3"><i class="fas fa-user-plus me-2"></i>Register Employee</a></div>
+    <div class="col-md-4"><a href="{{ url_for('attendance') }}" class="btn btn-success w-100 py-3"><i class="fas fa-camera me-2"></i>Start Scanner</a></div>
+    <div class="col-md-4"><a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary w-100 py-3"><i class="fas fa-chart-bar me-2"></i>View Dashboard</a></div>
 </div>
 
-<div class="row g-4">
-    <div class="col-lg-8">
+<div class="row g-3">
+    <div class="col-lg-7">
         <div class="card h-100">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-th-large me-2"></i>System Modules</h5>
-            </div>
+            <div class="card-header">System Modules</div>
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-sm-6">
-                        <div class="feature-card">
-                            <i class="fas fa-user-plus fa-2x mb-3" style="color: var(--accent-indigo);"></i>
-                            <h6>Employee Registration</h6>
-                            <p class="text-muted mb-0 small">Quick onboarding with face capture and biometric data storage.</p>
-                        </div>
-                    </div>
-                    <div class="col-sm-6">
-                        <div class="feature-card">
-                            <i class="fas fa-camera fa-2x mb-3" style="color: var(--success-green);"></i>
-                            <h6>Live Scanner</h6>
-                            <p class="text-muted mb-0 small">Real-time face recognition with instant attendance marking.</p>
-                        </div>
-                    </div>
-                    <div class="col-sm-6">
-                        <div class="feature-card">
-                            <i class="fas fa-history fa-2x mb-3" style="color: var(--warning-amber);"></i>
-                            <h6>Attendance Records</h6>
-                            <p class="text-muted mb-0 small">Comprehensive logs with detailed check-in/check-out timestamps.</p>
-                        </div>
-                    </div>
-                    <div class="col-sm-6">
-                        <div class="feature-card">
-                            <i class="fas fa-chart-line fa-2x mb-3" style="color: var(--accent-teal);"></i>
-                            <h6>Analytics & Reports</h6>
-                            <p class="text-muted mb-0 small">Generate insights and export attendance data for HR analysis.</p>
-                        </div>
-                    </div>
+                    <div class="col-sm-6"><div class="border p-3 h-100"><h6>Registration</h6><p class="text-muted mb-0 small">Onboard users and capture face data.</p></div></div>
+                    <div class="col-sm-6"><div class="border p-3 h-100"><h6>Scanner</h6><p class="text-muted mb-0 small">Run live recognition and mark attendance.</p></div></div>
+                    <div class="col-sm-6"><div class="border p-3 h-100"><h6>Records</h6><p class="text-muted mb-0 small">Inspect daily logs and attendance status.</p></div></div>
+                    <div class="col-sm-6"><div class="border p-3 h-100"><h6>Reports</h6><p class="text-muted mb-0 small">Export attendance ranges for review.</p></div></div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-lg-4">
+    <div class="col-lg-5">
         <div class="card h-100">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Quick Stats</h5>
-            </div>
+            <div class="card-header">Live Snapshot</div>
             <div class="card-body">
-                <div class="mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="text-muted">Today's Attendance</span>
-                        <span class="badge bg-success">87%</span>
-                    </div>
-                    <div class="progress" style="height: 8px;">
-                        <div class="progress-bar bg-success" style="width: 87%"></div>
-                    </div>
-                </div>
-                <div class="mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="text-muted">System Health</span>
-                        <span class="badge bg-success">Optimal</span>
-                    </div>
-                    <div class="progress" style="height: 8px;">
-                        <div class="progress-bar bg-success" style="width: 98%"></div>
-                    </div>
-                </div>
-                <div class="text-center">
-                    <div class="illustration" style="height: 120px; max-width: 200px;">
-                        <i class="fas fa-shield-alt fa-3x" style="opacity: 0.4; color: var(--accent-indigo);"></i>
-                    </div>
-                    <p class="text-muted small mb-0">Secure • Reliable • Efficient</p>
-                </div>
+                <div class="d-flex justify-content-between mb-3"><span>Total Students</span><strong id="total-students">-</strong></div>
+                <div class="d-flex justify-content-between mb-3"><span>Present Today</span><strong id="today-present">-</strong></div>
+                <div class="d-flex justify-content-between mb-3"><span>Late Today</span><strong id="today-late">-</strong></div>
+                <div class="d-flex justify-content-between"><span>Attendance Rate</span><strong id="attendance-rate">-</strong></div>
             </div>
         </div>
     </div>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+// Load quick stats
+$(document).ready(function() {
+    $.get('/api/quick_stats', function(data) {
+        $('#total-students').text(data.total_students || 0);
+        $('#today-present').text(data.present_today || 0);
+        $('#today-late').text(data.late_today || 0);
+        $('#attendance-rate').text(data.attendance_rate ? data.attendance_rate.toFixed(1) + '%' : '0%');
+    }).fail(function() {
+        $('#total-students').text('0');
+        $('#today-present').text('0');
+        $('#today-late').text('0');
+        $('#attendance-rate').text('0%');
     });
 });
 </script>
