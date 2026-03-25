@@ -1,0 +1,19 @@
+# AuraTrack Python 3.14 Compatible Requirements
+# These versions work with the latest Python 3.14
+
+# Core Flask (Python 3.14 compatible)
+Flask==2.3.3
+Flask-CORS==4.0.0
+
+# Essential packages (Python 3.14 compatible)
+numpy==1.26.4
+Pillow==10.2.0
+
+# Computer vision (Python 3.14 compatible)
+opencv-python-headless==4.9.0.80
+
+# Database (Python 3.14 compatible)
+psycopg2-binary==2.9.9
+
+# Configuration
+configparser==5.3.0
