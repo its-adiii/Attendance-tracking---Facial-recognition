@@ -519,6 +519,14 @@ def edit_student(roll_number):
         flash('Edit failed!', 'error')
         return redirect(url_for('students'))
 
+@app.route('/camera_feed')
+def camera_feed():
+    """Camera feed endpoint for video streaming"""
+    return jsonify({
+        'status': 'camera_ready',
+        'message': 'Camera feed endpoint ready'
+    })
+
 @app.route('/api/recognize_face', methods=['POST'])
 def recognize_face():
     """Proper face recognition API"""
