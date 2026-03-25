@@ -1,0 +1,19 @@
+# AuraTrack Python 3.9 Compatible Requirements
+# These versions work with Python 3.9 on Render
+
+# Core Flask (compatible with Python 3.9)
+Flask==2.2.5
+Flask-CORS==3.0.10
+
+# Essential packages with Python 3.9 wheels
+numpy==1.21.6
+Pillow==8.4.0
+
+# Computer vision (Python 3.9 compatible)
+opencv-python-headless==4.6.0.66
+
+# Database (Python 3.9 compatible)
+psycopg2-binary==2.9.3
+
+# Configuration
+configparser==5.2.0

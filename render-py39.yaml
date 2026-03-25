@@ -1,0 +1,28 @@
+# AuraTrack Render Configuration
+# Force Python 3.9 for compatibility
+
+services:
+  - type: web
+    name: auralive
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements-py39.txt
+    startCommand: python clean_backend.py
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.16
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        value: auralive-production-secret-key
+      - key: PORT
+        value: 8080
+      - key: HOST
+        value: 0.0.0.0
+
+databases:
+  - name: auralive-db
+    plan: free
+    databaseName: auralive
+    user: auralive
