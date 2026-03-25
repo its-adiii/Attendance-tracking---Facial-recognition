@@ -1,0 +1,17 @@
+# AuraTrack Minimal Requirements - Guaranteed to work on Render
+# Only essential dependencies included
+
+# Core Flask
+Flask==2.3.3
+Flask-CORS==4.0.0
+
+# Essential for face recognition
+opencv-python-headless==4.8.1.78
+Pillow==9.5.0
+numpy==1.24.4
+
+# Database for Render
+psycopg2-binary==2.9.7
+
+# Configuration
+configparser==5.3.0
