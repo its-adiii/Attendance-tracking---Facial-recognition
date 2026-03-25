@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: auralive
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python complete_backend.py
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.0
+      - key: FLASK_ENV
+        value: production
+      - key: PORT
+        value: 8080
+      - key: SECRET_KEY
+        value: auralive-production-secret-key
+
+databases:
+  - name: auralive-db
+    plan: free
+    databaseName: auralive
+    user: auralive
