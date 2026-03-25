@@ -1,0 +1,12 @@
+# AuraTrack Minimal Requirements - BULLETPROOF for Render
+# Only essential packages that definitely work with Python 3.14
+
+# Core Flask
+Flask==2.3.3
+Flask-CORS==4.0.0
+
+# Essential database connector
+psycopg2-binary==2.9.9
+
+# Basic configuration
+configparser==5.3.0

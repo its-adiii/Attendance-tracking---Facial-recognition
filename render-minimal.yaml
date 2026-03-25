@@ -1,0 +1,26 @@
+# AuraTrack Minimal Render Configuration
+# Bulletproof deployment with minimal dependencies
+
+services:
+  - type: web
+    name: auralive-minimal
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements-minimal-render.txt
+    startCommand: python minimal_backend.py
+    healthCheckPath: /health
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        value: auralive-minimal-secret-key
+      - key: PORT
+        value: 8080
+      - key: HOST
+        value: 0.0.0.0
+
+databases:
+  - name: auralive-minimal-db
+    plan: free
+    databaseName: auralive
+    user: auralive
