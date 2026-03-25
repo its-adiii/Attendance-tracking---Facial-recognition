@@ -1,0 +1,26 @@
+# AuraTrack Deep Learning Render Configuration
+# Advanced face recognition with deep learning models
+
+services:
+  - type: web
+    name: auralive-deep-learning
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements-dl.txt
+    startCommand: python deep_learning_backend.py
+    healthCheckPath: /health
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        value: auralive-deep-learning-secret-key
+      - key: PORT
+        value: 8080
+      - key: HOST
+        value: 0.0.0.0
+
+databases:
+  - name: auralive-deep-learning-db
+    plan: free
+    databaseName: auralive
+    user: auralive
