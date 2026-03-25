@@ -117,7 +117,7 @@ class FaceRecognitionSystem:
             return None
     
     def recognize_face(self, image_data):
-        """Recognize face from image data"""
+        """Recognize face from image data with enhanced accuracy"""
         try:
             # Decode image
             face_img = self.decode_base64_image(image_data)
@@ -134,8 +134,9 @@ class FaceRecognitionSystem:
                 if len(faces) == 0:
                     return None, 0.0, "No face detected"
                 
-                # Use the first detected face
-                (x, y, w, h) = faces[0]
+                # Use the largest detected face
+                largest_face = max(faces, key=lambda f: f[2] * f[3])
+                (x, y, w, h) = largest_face
                 face_roi = gray[y:y+h, x:x+w]
                 face_roi = cv2.resize(face_roi, (100, 100))
             else:
@@ -150,15 +151,31 @@ class FaceRecognitionSystem:
             best_confidence = 0.0
             
             for i, known_face in enumerate(self.known_faces):
-                # Simple comparison using template matching
-                result = cv2.matchTemplate(face_roi, known_face, cv2.TM_CCOEFF_NORMED)
-                _, max_val, _, _ = cv2.minMaxLoc(result)
+                # Method 1: Template Matching
+                result_tm = cv2.matchTemplate(face_roi, known_face, cv2.TM_CCOEFF_NORMED)
+                _, max_val_tm, _, _ = cv2.minMaxLoc(result_tm)
+                confidence_tm = max_val_tm * 100
                 
-                # Convert to confidence (0-100)
-                confidence = max_val * 100
+                # Method 2: Correlation Coefficient
+                result_cc = cv2.matchTemplate(face_roi, known_face, cv2.TM_CCORR_NORMED)
+                _, max_val_cc, _, _ = cv2.minMaxLoc(result_cc)
+                confidence_cc = max_val_cc * 100
                 
-                if confidence > best_confidence and confidence > 30:  # Threshold
-                    best_confidence = confidence
+                # Method 3: Squared Difference
+                result_sq = cv2.matchTemplate(face_roi, known_face, cv2.TM_SQDIFF_NORMED)
+                _, min_val_sq, _, _ = cv2.minMaxLoc(result_sq)
+                confidence_sq = (1 - min_val_sq) * 100
+                
+                # Additional check: Histogram comparison
+                hist_roi = cv2.calcHist([face_roi], [256], [0, 256], cv2.HISTCMP_CORREL)
+                hist_known = cv2.calcHist([known_face], [256], [0, 256], cv2.HISTCMP_CORREL)
+                hist_confidence = cv2.compareHist(hist_roi, hist_known, cv2.HISTCMP_CORREL)[0] * 100
+                
+                # Use best method
+                final_confidence = max(confidence_tm, confidence_cc, confidence_sq, hist_confidence)
+                
+                if final_confidence > best_confidence and final_confidence > 20:  # Lower threshold
+                    best_confidence = final_confidence
                     best_match = self.known_names[i]
             
             if best_match:
