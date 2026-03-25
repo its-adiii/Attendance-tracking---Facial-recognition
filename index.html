@@ -19,7 +19,7 @@
             --light-color: #f8f9fa;
             --dark-color: #343a40;
             --border-radius: 8px;
-            --box-shadow: 0 4px 6px rgba(0, 0, 0.1);
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
         * {
@@ -115,6 +115,11 @@
             color: white;
         }
         
+        .status-info {
+            background: var(--info-color);
+            color: white;
+        }
+        
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -179,13 +184,43 @@
             font-size: 0.8rem;
             margin: 0.25rem;
         }
+        
+        .attendance-table {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+        
+        .attendance-table th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            max-width: 400px;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="#">
+            <a class="navbar-brand" href="#demo">
                 <i class="fas fa-user-check me-2"></i>
                 <strong>AuraTrack</strong>
             </a>
@@ -202,6 +237,9 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#tech">Technology</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#attendance">Attendance</a>
                     </li>
                 </ul>
             </div>
@@ -222,24 +260,37 @@
                 <div class="col-md-8">
                     <div class="card camera-container">
                         <video id="video" width="640" height="480" autoplay muted></video>
-                        <div id="status" class="status-indicator status-error">
+                        <canvas id="canvas" style="display: none;"></canvas>
+                        <div id="status" class="status-indicator status-info">
                             <i class="fas fa-camera me-2"></i>
-                            <span id="status-text">Camera Loading...</span>
+                            <span id="status-text">Ready to Start</span>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="row mt-4">
-                <div class="col-md-6">
+                <div class="col-md-3">
                     <button class="btn btn-primary btn-lg w-100" onclick="startCamera()">
                         <i class="fas fa-video me-2"></i>
                         Start Camera
                     </button>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-3">
+                    <button class="btn btn-primary btn-lg w-100" onclick="stopCamera()">
+                        <i class="fas fa-stop me-2"></i>
+                        Stop Camera
+                    </button>
+                </div>
+                <div class="col-md-3">
                     <button class="btn btn-primary btn-lg w-100" onclick="recognizeFace()">
                         <i class="fas fa-user-check me-2"></i>
                         Recognize Face
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-primary btn-lg w-100" onclick="resetSystem()">
+                        <i class="fas fa-redo me-2"></i>
+                        Reset System
                     </button>
                 </div>
             </div>
@@ -291,12 +342,47 @@
         </div>
     </section>
 
+    <!-- Attendance Section -->
+    <section class="demo-section" id="attendance">
+        <div class="container">
+            <h2 class="text-center mb-5">Attendance Records</h2>
+            <div class="row">
+                <div class="col-12">
+                    <div class="card attendance-table">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Employee ID</th>
+                                            <th>Time</th>
+                                            <th>Confidence</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="attendanceTableBody">
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">
+                                                No attendance records yet. Start the camera and recognize faces.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Technology Section -->
     <section class="demo-section" id="tech">
         <div class="container">
             <h2 class="text-center mb-5">Technology Stack</h2>
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="card">
                         <div class="card-body text-center">
                             <h4 class="card-title">Frontend</h4>
@@ -312,31 +398,28 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="card">
                         <div class="card-body text-center">
                             <h4 class="card-title">Face Recognition</h4>
                             <div class="mb-3">
-                                <i class="fab fa-python fa-3x text-primary"></i>
+                                <i class="fas fa-brain fa-3x text-primary"></i>
                             </div>
-                            <p>Deep Learning Models</p>
+                            <p>TensorFlow.js Deep Learning Models</p>
                             <div class="mt-2">
-                                <span class="badge bg-primary">TensorFlow.js</span>
-                                <span class="badge bg-secondary">Dlib</span>
-                                <span class="badge bg-info">OpenCV</span>
+                                <span class="badge bg-primary">SSD MobileNet</span>
+                                <span class="badge bg-secondary">Face Landmarks</span>
+                                <span class="badge bg-info">Face Descriptors</span>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="row mt-4">
-                <div class="col-md-12">
+                <div class="col-md-4">
                     <div class="card">
                         <div class="card-body text-center">
                             <h4 class="card-title">Deployment</h4>
                             <div class="mb-3">
-                                <i class="fab fa-github fa-3x text-primary"></i>
-                                <i class="fas fa-cloud fa-2x text-secondary"></i>
+                                <i class="fas fa-cloud fa-3x text-primary"></i>
                             </div>
                             <p>Static hosting on Netlify with global CDN</p>
                             <div class="mt-2">
@@ -373,29 +456,44 @@
 
     <script>
         let video = null;
+        let stream = null;
         let isModelLoaded = false;
-        let recognizedFaces = [];
-        let attendanceMarked = new Set();
-
-        // Sample known faces for demo
-        const knownFaces = [
-            { name: "Alice Johnson", id: "EMP001" },
-            { name: "Bob Smith", id: "EMP002" },
-            { name: "Carol Williams", id: "EMP003" },
-            { name: "David Brown", id: "EMP004" },
-            { name: "Eva Davis", id: "EMP005" }
+        let isDetecting = false;
+        let attendanceRecords = [];
+        let knownFaces = [
+            { name: "Alice Johnson", id: "EMP001", descriptor: null },
+            { name: "Bob Smith", id: "EMP002", descriptor: null },
+            { name: "Carol Williams", id: "EMP003", descriptor: null },
+            { name: "David Brown", id: "EMP004", descriptor: null },
+            { name: "Eva Davis", id: "EMP005", descriptor: null }
         ];
 
         // Initialize face-api.js models
         async function loadModels() {
-            const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
+            updateStatus('Loading Models...', 'info');
             
-            await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL + '/ssd_mobilenetv1_model-weights_manifest.json');
-            await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL + '/face_landmark_68_model-weights_manifest.json');
-            await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL + '/face_recognition_model-weights_manifest.json');
-            
-            isModelLoaded = true;
-            updateStatus('Models Loaded Successfully', 'success');
+            try {
+                // Use CDN models for static deployment
+                await faceapi.nets.ssdMobilenetv1.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights/ssd_mobilenetv1_model-weights_manifest.json');
+                await faceapi.nets.faceLandmark68Net.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights/face_landmark_68_model-weights_manifest.json');
+                await faceapi.nets.faceRecognitionNet.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights/face_recognition_model-weights_manifest.json');
+                
+                isModelLoaded = true;
+                updateStatus('Models Loaded Successfully', 'success');
+                
+                // Initialize known faces with random descriptors for demo
+                initializeKnownFaces();
+            } catch (error) {
+                console.error('Error loading models:', error);
+                updateStatus('Models Failed to Load', 'error');
+            }
+        }
+
+        function initializeKnownFaces() {
+            // Create mock face descriptors for demo
+            knownFaces.forEach(face => {
+                face.descriptor = new Array(128).fill(0).map(() => Math.random());
+            });
         }
 
         function updateStatus(message, type = 'info') {
@@ -408,16 +506,25 @@
 
         async function startCamera() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
+                if (!isModelLoaded) {
+                    await loadModels();
+                }
+                
+                updateStatus('Requesting Camera Access...', 'info');
+                
+                const mediaStream = await navigator.mediaDevices.getUserMedia({ 
                     video: { width: 640, height: 480 } 
                 });
                 
+                video = document.getElementById('video');
+                stream = mediaStream;
                 video.srcObject = stream;
                 video.play();
                 
                 updateStatus('Camera Started', 'success');
                 
                 // Start face detection
+                isDetecting = true;
                 detectFaces();
             } catch (error) {
                 updateStatus('Camera Access Denied', 'error');
@@ -425,37 +532,61 @@
             }
         }
 
-        async function detectFaces() {
-            if (!isModelLoaded) {
-                updateStatus('Loading Models...', 'info');
-                await loadModels();
+        function stopCamera() {
+            isDetecting = false;
+            
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
             }
+            
+            if (video) {
+                video.srcObject = null;
+            }
+            
+            updateStatus('Camera Stopped', 'info');
+        }
 
-            if (!video.srcObject) {
-                updateStatus('Please start camera first', 'error');
+        async function detectFaces() {
+            if (!isDetecting || !video || !isModelLoaded) {
                 return;
             }
 
-            const detections = await faceapi.detectAllFaces(video, 
-                new faceapi.SsdMobilenetv1Options({minConfidence: 0.5})
-            );
+            try {
+                const detections = await faceapi.detectAllFaces(video, 
+                    new faceapi.SsdMobilenetv1Options({minConfidence: 0.5})
+                );
 
-            // Draw detections
-            const canvas = faceapi.createCanvasFromMedia(video);
-            const displaySize = { width: video.width, height: video.height };
-            faceapi.matchDimensions(canvas, displaySize);
-            
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            detections.forEach(detection => {
-                const box = detection.box;
-                const drawBox = new faceapi.draw.DrawBox(box, { label: detection.toString() });
-                drawBox.draw(canvas);
-            });
+                // Draw detections on canvas
+                const canvas = document.getElementById('canvas');
+                const displaySize = { width: video.width, height: video.height };
+                faceapi.matchDimensions(canvas, displaySize);
+                
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                detections.forEach(detection => {
+                    const box = detection.box;
+                    const drawBox = new faceapi.draw.DrawBox(box, { label: detection.toString() });
+                    drawBox.draw(canvas);
+                });
 
-            // Store detected faces for recognition
-            window.currentDetections = detections;
+                // Update face count
+                if (detections.length > 0) {
+                    updateStatus(`${detections.length} Face(s) Detected`, 'success');
+                } else {
+                    updateStatus('No Face Detected', 'info');
+                }
+
+                // Store current detections for recognition
+                window.currentDetections = detections;
+            } catch (error) {
+                console.error('Detection error:', error);
+            }
+
+            // Continue detection
+            if (isDetecting) {
+                requestAnimationFrame(detectFaces);
+            }
         }
 
         async function recognizeFace() {
@@ -479,18 +610,15 @@
                     // Generate face descriptor
                     const descriptor = await faceapi.computeFaceDescriptor(detection.image, landmarks);
                     
-                    // Compare with known faces (simulated)
+                    // Compare with known faces
                     const match = findBestMatch(descriptor);
                     
                     if (match && match.confidence > 0.6) {
                         const employeeId = match.employee.id;
-                        if (!attendanceMarked.has(employeeId)) {
-                            markAttendance(match.name, employeeId);
-                            attendanceMarked.add(employeeId);
-                            updateStatus(`Recognized: ${match.name} (${(match.confidence * 100).toFixed(1)}%)`, 'success');
-                        } else {
-                            updateStatus(`Already marked: ${match.name}`, 'info');
-                        }
+                        markAttendance(match.name, employeeId, match.confidence);
+                        updateStatus(`Recognized: ${match.name} (${(match.confidence * 100).toFixed(1)}%)`, 'success');
+                    } else {
+                        updateStatus('Face Not Recognized', 'error');
                     }
                 } catch (error) {
                     console.error('Recognition error:', error);
@@ -503,13 +631,22 @@
             let bestDistance = Infinity;
             let bestConfidence = 0;
 
-            // Simulate face comparison with known faces
+            // Compare with known faces
             knownFaces.forEach(knownFace => {
-                // Simulate Euclidean distance calculation
-                const distance = Math.random() * 0.5; // Simulated distance
-                const confidence = 1 - distance;
+                if (!knownFace.descriptor) return;
                 
-                if (confidence > bestConfidence) {
+                // Calculate Euclidean distance
+                let distance = 0;
+                for (let i = 0; i < descriptor.length; i++) {
+                    distance += Math.pow(descriptor[i] - knownFace.descriptor[i], 2);
+                }
+                distance = Math.sqrt(distance);
+                
+                // Convert distance to confidence
+                const confidence = Math.max(0, 1 - distance / 2);
+                
+                if (distance < bestDistance && confidence > 0.6) {
+                    bestDistance = distance;
                     bestConfidence = confidence;
                     bestMatch = knownFace;
                 }
@@ -518,43 +655,87 @@
             return bestMatch ? { ...bestMatch, confidence: bestConfidence } : null;
         }
 
-        function markAttendance(name, employeeId) {
+        function markAttendance(name, employeeId, confidence) {
             const timestamp = new Date().toLocaleString();
-            console.log(`Attendance marked: ${name} (${employeeId}) at ${timestamp}`);
+            const record = {
+                name: name,
+                employeeId: employeeId,
+                time: timestamp,
+                confidence: (confidence * 100).toFixed(1),
+                status: confidence > 0.8 ? 'Present' : 'Late'
+            };
             
-            // Show attendance confirmation
-            showAttendanceNotification(name, employeeId, timestamp);
+            attendanceRecords.unshift(record);
+            updateAttendanceTable();
+            showNotification(`Attendance marked for ${name}`, 'success');
         }
 
-        function showAttendanceNotification(name, employeeId, timestamp) {
-            // Create notification element
+        function updateAttendanceTable() {
+            const tbody = document.getElementById('attendanceTableBody');
+            
+            if (attendanceRecords.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">
+                            No attendance records yet. Start the camera and recognize faces.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = attendanceRecords.map(record => `
+                <tr>
+                    <td>${record.name}</td>
+                    <td>${record.employeeId}</td>
+                    <td>${record.time}</td>
+                    <td>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar ${record.confidence > 80 ? 'bg-success' : record.confidence > 60 ? 'bg-warning' : 'bg-danger'}" 
+                                 style="width: ${record.confidence}%">
+                                ${record.confidence}%
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge ${record.status === 'Present' ? 'bg-success' : 'bg-warning'}">
+                            ${record.status}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function showNotification(message, type = 'info') {
             const notification = document.createElement('div');
-            notification.className = 'alert alert-success position-fixed';
-            notification.style.cssText = `
-                top: 20px;
-                right: 20px;
-                z-index: 9999;
-                min-width: 300px;
-            `;
+            notification.className = `alert alert-${type} notification fade-in`;
             notification.innerHTML = `
-                <h5><i class="fas fa-check-circle me-2"></i>Attendance Marked!</h5>
-                <p><strong>${name}</strong> (${employeeId})</p>
-                <p><small>${timestamp}</small>
+                <h5><i class="fas fa-info-circle me-2"></i>${message}</h5>
             `;
             
             document.body.appendChild(notification);
             
-            // Remove after 5 seconds
+            // Remove after 3 seconds
             setTimeout(() => {
                 if (notification.parentNode) {
                     notification.parentNode.removeChild(notification);
                 }
-            }, 5000);
+            }, 3000);
+        }
+
+        function resetSystem() {
+            attendanceRecords = [];
+            updateAttendanceTable();
+            updateStatus('System Reset', 'info');
+            showNotification('System has been reset', 'info');
         }
 
         // Initialize on page load
         window.addEventListener('load', () => {
-            updateStatus('Click "Start Camera" to begin', 'info');
+            updateStatus('Ready to Start', 'info');
+            
+            // Auto-load models
+            loadModels();
         });
 
         // Smooth scrolling for navigation
@@ -566,6 +747,11 @@
                     target.scrollIntoView({ behavior: 'smooth' });
                 }
             });
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            stopCamera();
         });
     </script>
 </body>
